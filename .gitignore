@@ -6,3 +6,4 @@ production/*.png
 *.zip
 node_modules/
 .sites/
+.package-stage-*/
