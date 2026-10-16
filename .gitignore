@@ -1,0 +1,8 @@
+.env*
+.tools/
+production/jobs/
+production/*.mp4
+production/*.png
+*.zip
+node_modules/
+.sites/

@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f5efe3">
+  <meta name="description" content="Одна встреча. Одно да. Навсегда. Приглашение на свадьбу Айдара и Алины.">
+  <title>Айдар & Алина — наша история</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="assets/closed-box.webp" as="image">
+  <link rel="stylesheet" href="fonts.css"><link rel="stylesheet" href="style.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body class="intro-locked">
+  <a class="sr-only skip-link" href="#welcome">Перейти к приглашению</a>
+
+  <main>
+    <section class="story" id="story" aria-label="Интерактивная история предложения">
+      <div class="story-stage">
+        <div class="scene" aria-hidden="true">
+          <img class="scene-poster" id="scenePoster" src="assets/closed-box.webp" alt="" fetchpriority="high">
+          <video id="openingVideo" class="scene-video" muted playsinline preload="auto" poster="assets/closed-box.webp"><source src="assets/opening.mp4" type="video/mp4"></video>
+          <video id="proposalVideo" class="scene-video" muted playsinline preload="metadata" poster="assets/ring-held.webp"><source src="assets/proposal.mp4" type="video/mp4"></video>
+          <video id="foreverVideo" class="scene-video" muted playsinline preload="metadata" poster="assets/ring-worn.webp"><source src="assets/forever.mp4" type="video/mp4"></video>
+          <div class="scene-wash"></div>
+        </div>
+        <div class="story-copy">
+          <div class="chapter is-active" data-chapter="intro" aria-hidden="true"></div>
+          <div class="chapter" data-chapter="promise" aria-hidden="true">
+            <p class="eyebrow">ГЛАВА I · НАШЕ НАЧАЛО</p>
+            <h2>Одно<br><em>маленькое «да».</em></h2>
+            <p>И целая жизнь,<br>которую хочется прожить вместе.</p>
+            <span class="chapter-flourish">❧</span>
+          </div>
+          <div class="chapter" data-chapter="together" aria-hidden="true">
+            <p class="eyebrow">ГЛАВА II · ДВА СЕРДЦА</p>
+            <h2>Выбрать тебя.<br><em>Снова и снова.</em></h2>
+            <p>В каждом завтра,<br>в каждом новом дне.</p>
+            <span class="chapter-flourish">❧</span>
+          </div>
+          <div class="chapter" data-chapter="forever" aria-hidden="true">
+            <p class="eyebrow">ГЛАВА III · ТЕПЕРЬ НАВСЕГДА</p>
+            <h2>Одна любовь.<br><em>Одна семья.</em></h2>
+            <p>И вы — часть этой истории.<br>Разделите с нами самый счастливый день.</p>
+            <a class="text-link" href="#welcome">Наше приглашение <span>↓</span></a>
+          </div>
+        </div>
+        <button id="boxHotspot" class="box-hotspot" aria-label="Открыть коробочку с кольцом и начать историю"></button>
+        <p id="playbackStatus" class="sr-only" role="status"></p>
+        <div id="videoError" class="video-error" hidden><p>Не удалось загрузить видео.</p><button id="retryStory">Попробовать ещё раз</button><button id="skipStory">Открыть приглашение</button></div>
+        <div class="story-bottom">
+          <span id="storyCounter" class="micro">С ЛЮБОВЬЮ, ДЛЯ ВАС</span>
+          <span id="scrollHint" class="scroll-hint" hidden>Прокручивайте — история продолжается <span>↓</span></span>
+        </div>
+        <div class="story-progress" aria-hidden="true"><span id="storyProgress"></span></div>
+      </div>
+    </section>
+
+    <section class="welcome section-pad" id="welcome">
+      <div class="section-kicker reveal"><span>01</span><span>САМЫМ БЛИЗКИМ</span><span class="tiny-star">✧</span></div>
+      <div class="welcome-layout">
+        <div class="welcome-copy reveal"><p class="script small-script">Дорогие наши!</p><h1 class="invitation-names"><span data-name="first">Айдар</span> <i>&</i> <span data-name="second">Алина</span></h1><h2>Счастье больше,<br>когда вы <em>рядом.</em></h2><p id="welcomeText" class="body-copy"></p><p id="hosts" class="signature"></p></div>
+        <div class="calendar-wrap reveal">
+          <p class="eyebrow">ТОТ САМЫЙ ДЕНЬ</p><p id="calendarMonth" class="calendar-month">Июнь <span>2027</span></p>
+          <table class="calendar" aria-label="Календарь свадьбы"><thead><tr><th scope="col">ПН</th><th scope="col">ВТ</th><th scope="col">СР</th><th scope="col">ЧТ</th><th scope="col">ПТ</th><th scope="col">СБ</th><th scope="col">ВС</th></tr></thead><tbody id="calendarBody"></tbody></table>
+          <button class="text-link calendar-download" id="calendarDownload">Сохранить этот день <span>↗</span></button>
+        </div>
+      </div>
+    </section>
+
+    <section class="program section-pad" id="program">
+      <div class="section-kicker reveal"><span>02</span><span>КАК ПРОЙДЁТ НАШ ДЕНЬ</span><span class="tiny-star">✧</span></div>
+      <div class="program-layout"><div class="program-intro reveal"><p class="script small-script">Моменты счастья</p><h2>Вечер, который<br>мы <em>запомним.</em></h2><p>Пусть время немного замедлится.<br>В этот день нам некуда спешить.</p><div class="rings-symbol" aria-hidden="true"><span></span><span></span></div></div><ol class="timeline" id="timeline"></ol></div>
+    </section>
+
+    <section class="place section-pad" id="place">
+      <div class="section-kicker reveal"><span>03</span><span>МЕСТО НАШЕЙ ВСТРЕЧИ</span><span class="tiny-star">✧</span></div>
+      <div class="place-layout"><div class="place-photo reveal"><img src="assets/forever.webp" alt="Золотое обручальное кольцо на руке невесты" loading="lazy"><span class="photo-note">to have & to hold</span></div>
+      <div class="place-copy reveal"><p class="eyebrow" id="venueType">БАНКЕТНЫЙ ЗАЛ</p><h2 id="venueName">«Аура»</h2><p id="venueCity" class="place-city">Бишкек</p><div class="fine-line"></div><p id="venueAddress" class="body-copy"></p><p class="place-time"><span data-date="long">20 июня 2027</span><span>Сбор гостей в <b id="arrivalTime">16:30</b></span></p><a id="mapLink" class="outline-button" hidden target="_blank" rel="noopener noreferrer">Посмотреть на карте <span>↗</span></a><p id="venueDemo" class="micro">Место указано для примера.<br>Адрес и маршрут добавим перед отправкой приглашений.</p></div></div>
+    </section>
+
+    <section class="dress section-pad" id="dress">
+      <div class="dress-heading reveal"><p class="eyebrow">МАЛЕНЬКИЕ ДЕТАЛИ БОЛЬШОГО ДНЯ</p><h2>В гармонии <em>с праздником.</em></h2><p class="body-copy">Главное украшение вечера — ваши улыбки.<br>А если захочется поддержать настроение, выбирайте эти оттенки.</p></div>
+      <div id="palette" class="palette reveal"></div>
+      <div class="wishes reveal"><div><span>01 / ДРЕСС-КОД</span><p>Вечерняя элегантность.<br>И немного вашего характера.</p></div><div><span>02 / ЦВЕТЫ</span><p>Вместо букета — тёплые слова.<br>Они останутся с нами надолго.</p></div><div><span>03 / НАСТРОЕНИЕ</span><p>Берите с собой любовь<br>и готовность танцевать.</p></div></div>
+    </section>
+
+    <section class="countdown-section" aria-label="До свадьбы осталось"><p class="script">До нашего «навсегда»</p><div id="countdown" class="countdown" aria-live="off"></div><p class="eyebrow" data-date="long">20 ИЮНЯ 2027</p></section>
+
+    <section class="rsvp section-pad" id="rsvp">
+      <div class="section-kicker reveal"><span>04</span><span>БУДЕТЕ С НАМИ?</span><span class="tiny-star">✧</span></div>
+      <div class="rsvp-layout"><div class="rsvp-copy reveal"><p class="script small-script">Очень ждём вас</p><h2>Ваше место —<br><em>рядом с нами.</em></h2><p class="body-copy">Поделитесь своими планами до <span id="deadline">1 июня</span>,<br>чтобы мы подготовили для вас<br>самый тёплый вечер.</p></div>
+      <form id="rsvpForm" class="rsvp-form reveal">
+        <label for="guestName">ВАШЕ ИМЯ И ФАМИЛИЯ</label><input id="guestName" name="name" placeholder="Как к вам обращаться?" required minlength="2" maxlength="120" autocomplete="name">
+        <fieldset><legend>СМОЖЕТЕ РАЗДЕЛИТЬ С НАМИ ЭТОТ ДЕНЬ?</legend><label class="radio-choice"><input type="radio" name="attending" value="yes" required><span></span>С радостью буду!</label><label class="radio-choice"><input type="radio" name="attending" value="no"><span></span>К сожалению, не получится</label></fieldset>
+        <div id="guestOptions" hidden><label for="guestCount">СКОЛЬКО ВАС БУДЕТ, ВКЛЮЧАЯ ВАС?</label><select id="guestCount" name="guests"><option value="1">Только я</option><option value="2">Нас двое</option><option value="3">Нас трое</option><option value="4">Нас четверо</option><option value="5">Нас пятеро</option></select></div>
+        <label for="guestNote">ПОЖЕЛАНИЯ К МЕНЮ ИЛИ ПАРА ТЁПЛЫХ СЛОВ</label><textarea id="guestNote" name="note" rows="2" maxlength="1000" placeholder="Можно оставить здесь…"></textarea>
+        <p class="demo-note" id="demoNote">Демонстрация: ответ сохранится только в этом браузере. Отправку организаторам подключим позже.</p>
+        <button class="solid-button" type="submit" id="submitRsvp">Сохранить ответ <span>↗</span></button><p id="formStatus" class="form-status" role="status" tabindex="-1"></p>
+      </form></div>
+    </section>
+
+    <footer class="footer"><p class="eyebrow">ЛУЧШЕЕ ТОЛЬКО НАЧИНАЕТСЯ</p><p class="footer-names"><span data-name="first">Айдар</span><i>&</i><span data-name="second">Алина</span></p><p>С любовью и предвкушением встречи.</p><div id="contacts" class="contacts"></div><div class="footer-bottom"><span data-date="numeric">20 · 06 · 2027</span><button id="replayStory">Посмотреть историю ещё раз ↗</button><span>СОЗДАНО С ЛЮБОВЬЮ</span></div></footer>
+  </main>
+  <button id="musicToggle" class="music-toggle" aria-label="Включить музыку" aria-pressed="false"><span class="music-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="music-label">Музыка</span></button>
+  <noscript><div class="noscript">Для интерактивной истории и формы включите JavaScript. Свадьба Айдара и Алины — 20 июня 2027, Бишкек. Подробности уточняются.</div></noscript>
+</body>
+</html>
