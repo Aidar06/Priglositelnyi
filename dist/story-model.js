@@ -11,5 +11,8 @@ export function calendarRows(year,month){
 export function icsEscape(value){return String(value).replace(/\\/g,'\\\\').replace(/\r?\n/g,'\\n').replace(/;/g,'\\;').replace(/,/g,'\\,');}
 export function createCalendarEvent(c){
   const utc=s=>new Date(s).toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
-  return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Priglasi//Wedding//RU','CALSCALE:GREGORIAN','BEGIN:VEVENT',`UID:wedding-${utc(c.date)}@priglasi.local`,`DTSTAMP:${utc(new Date())}`,`DTSTART:${utc(c.date)}`,`DTEND:${utc(c.endDate)}`,`SUMMARY:${icsEscape(`Свадьба ${c.names.first} и ${c.names.second}`)}`,`LOCATION:${icsEscape(`${c.venue.name}, ${c.venue.city}${c.demo?'':`, ${c.venue.address}`}`)}`,`DESCRIPTION:${icsEscape(c.demo?'Демонстрационные данные. Уточните дату и место у организаторов.':c.welcome)}`,'END:VEVENT','END:VCALENDAR',''].join('\r\n');
+  const localized=c.venue?c:{...c,...(c.locales?.[c.language||'ru']||c.locales?.ru)};const ky=c.language==='ky';
+  const summary=ky?`${localized.names.first} менен ${localized.names.second} — үйлөнүү тою`:`Свадьба ${localized.names.first} и ${localized.names.second}`;
+  const description=localized.demo?(ky?'Демо маалыматтар. Күнү жана жери тууралуу уюштуруучулардан тактаңыз.':'Демонстрационные данные. Уточните дату и место у организаторов.'):localized.welcome;
+  return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Priglasi//Wedding//RU','CALSCALE:GREGORIAN','BEGIN:VEVENT',`UID:wedding-${utc(localized.date)}@priglasi.local`,`DTSTAMP:${utc(new Date())}`,`DTSTART:${utc(localized.date)}`,`DTEND:${utc(localized.endDate)}`,`SUMMARY:${icsEscape(summary)}`,`LOCATION:${icsEscape(`${localized.venue.name}, ${localized.venue.city}${localized.demo?'':`, ${localized.venue.address}`}`)}`,`DESCRIPTION:${icsEscape(description)}`,'END:VEVENT','END:VCALENDAR',''].join('\r\n');
 }
