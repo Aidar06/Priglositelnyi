@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import {calendarRows,storyFrame,createCalendarEvent} from '../dist/story-model.js';
-import {invitationIdFromPath,adaptXanoInvitation} from '../dist/backend-adapter.js';
+import {invitationIdFromPath,adaptXanoInvitation,createGuestPatch} from '../dist/backend-adapter.js';
 const root=path.resolve(import.meta.dirname,'../dist');
 const config=JSON.parse(fs.readFileSync(path.join(root,'content.json'),'utf8'));
 assert.equal(calendarRows(2027,5)[2][6],20,'Wedding must be on Sunday June 20');
@@ -17,12 +17,14 @@ const ics=createCalendarEvent(config);assert(ics.includes('DTSTART:20270620T1100
 const kyIcs=createCalendarEvent({...config,language:'ky'});assert(kyIcs.includes('SUMMARY:Айдар менен Алина — үйлөнүү тою'),'Kyrgyz calendar export');
 assert.equal(config.locales.ky.schedule.length,config.locales.ru.schedule.length,'Both languages need the same schedule');
 assert.equal(invitationIdFromPath('/3',config.backend.defaultId),'3','Path ID');assert.equal(invitationIdFromPath('/3/',config.backend.defaultId),'3','Trailing slash ID');assert.equal(invitationIdFromPath('/',config.backend.defaultId),'3','Default ID');assert.equal(invitationIdFromPath('/wrong',config.backend.defaultId),null,'Reject invalid ID');
+assert.equal(invitationIdFromPath('/3/guests',config.backend.defaultId),'3','Guest list path ID');
 const apiFixture={priglosi_id:3,names:{has:'Бекзат',wife:'Алина'},date:'2027-06-12T16:30:00',ceremonies:[{time:'16:30',ceremony_ru:'Встреча',text_ru:'Описание',ceremony_kg:'Тосуп алуу',text_kg:'Сүрөттөмө'},{time:'23:00',ceremony_ru:'Финал',text_ru:'До встречи',ceremony_kg:'Жыйынтык',text_kg:'Көрүшкөнчө'}],adress:{pl:'Банкетный зал',name:'Изумруд',adrr:'г. Бишкек, ул. Чуй, 123'},guests:[]};
 const adapted=adaptXanoInvitation(apiFixture,config);assert.equal(adapted.names.first,'Бекзат');assert.equal(adapted.date,'2027-06-12T16:30:00+06:00');assert.equal(adapted.endDate,'2027-06-12T23:00:00+06:00');assert.equal(adapted.locales.ky.schedule[1].title,'Жыйынтык');assert.equal(adapted.locales.ru.venue.name,'Изумруд');assert.equal(adapted.dataDemo,false);
+const guestPatch=createGuestPatch({...apiFixture,guests:[{name:'Айбек',wish:'Счастья!',guests_count:2,is_attending:true}]},3,{name:'  Нурия  ',wish:'  Любви! ',guests_count:3,is_attending:false});assert.equal(guestPatch.id,3);assert.equal(guestPatch.priglosi_id,3);assert.equal(guestPatch.guests.length,2);assert.deepEqual(guestPatch.guests[1],{name:'Нурия',wish:'Любви!',guests_count:3,is_attending:false});assert.equal(apiFixture.guests.length,0,'Patch builder must not mutate source');
 for(const name of ['opening.mp4','proposal.mp4','forever.mp4','closed-box.webp','ring-held.webp','ring-worn.webp','forever.webp'])assert(fs.statSync(path.join(root,'assets',name)).size>1000,`Missing asset ${name}`);
 for(const file of ['index.html','app.js','backend-adapter.js','style.css','fonts.css','content.json']){const text=fs.readFileSync(path.join(root,file),'utf8');assert(!/HIGGSFIELD_API_KEY|Authorization: Key/.test(text),'No secrets/client credentials');}
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 assert(html.includes('id="languageToggle"')&&html.includes('data-language="ky"'),'Russian/Kyrgyz switch');
 assert(!html.includes('id="palette"')&&!html.includes('В гармонии'),'Removed palette section');assert(fs.readFileSync(path.join(root,'_redirects'),'utf8').includes('/index.html 200'),'Deep-link fallback');
-for(const match of html.matchAll(/(?:src|href)="([^"#]+)"/g)){const url=match[1];if(!url.startsWith('http')&&!url.startsWith('data:'))assert(fs.existsSync(path.join(root,url)),`Missing file ${url}`);}
+for(const match of html.matchAll(/(?:src|href)="([^"#]+)"/g)){const url=match[1];if(!url.startsWith('http')&&!url.startsWith('data:')&&!url.startsWith('/'))assert(fs.existsSync(path.join(root,url)),`Missing file ${url}`);}
 console.log('Passed: calendar, leap year, scroll timeline boundaries, timezone export, assets and client secret checks.');

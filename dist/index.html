@@ -92,15 +92,24 @@
       <form id="rsvpForm" class="rsvp-form reveal">
         <label for="guestName">ВАШЕ ИМЯ И ФАМИЛИЯ</label><input id="guestName" name="name" placeholder="Как к вам обращаться?" required minlength="2" maxlength="120" autocomplete="name">
         <fieldset><legend>СМОЖЕТЕ РАЗДЕЛИТЬ С НАМИ ЭТОТ ДЕНЬ?</legend><label class="radio-choice"><input type="radio" name="attending" value="yes" required><span></span>С радостью буду!</label><label class="radio-choice"><input type="radio" name="attending" value="no"><span></span>К сожалению, не получится</label></fieldset>
-        <div id="guestOptions" hidden><label for="guestCount">СКОЛЬКО ВАС БУДЕТ, ВКЛЮЧАЯ ВАС?</label><select id="guestCount" name="guests"><option value="1">Только я</option><option value="2">Нас двое</option><option value="3">Нас трое</option><option value="4">Нас четверо</option><option value="5">Нас пятеро</option></select></div>
+        <div id="guestOptions" hidden><label for="guestCount">СКОЛЬКО ВАС БУДЕТ, ВКЛЮЧАЯ ВАС?</label><select id="guestCount" name="guests"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select></div>
         <label for="guestNote">ПОЖЕЛАНИЯ К МЕНЮ ИЛИ ПАРА ТЁПЛЫХ СЛОВ</label><textarea id="guestNote" name="note" rows="2" maxlength="1000" placeholder="Можно оставить здесь…"></textarea>
         <p class="demo-note" id="demoNote">Демонстрация: ответ сохранится только в этом браузере. Отправку организаторам подключим позже.</p>
         <button class="solid-button" type="submit" id="submitRsvp">Сохранить ответ <span>↗</span></button><p id="formStatus" class="form-status" role="status" tabindex="-1"></p>
       </form></div>
     </section>
 
-    <footer class="footer"><p class="eyebrow">ЛУЧШЕЕ ТОЛЬКО НАЧИНАЕТСЯ</p><p class="footer-names"><span data-name="first">Айдар</span><i>&</i><span data-name="second">Алина</span></p><p>С любовью и предвкушением встречи.</p><div id="contacts" class="contacts"></div><div class="footer-bottom"><span data-date="numeric">20 · 06 · 2027</span><button id="replayStory">Посмотреть историю ещё раз ↗</button><span>СОЗДАНО С ЛЮБОВЬЮ</span></div></footer>
+    <footer class="footer"><p class="eyebrow">ЛУЧШЕЕ ТОЛЬКО НАЧИНАЕТСЯ</p><p class="footer-names"><span data-name="first">Айдар</span><i>&</i><span data-name="second">Алина</span></p><p>С любовью и предвкушением встречи.</p><div id="contacts" class="contacts"></div><a id="guestListLink" class="guest-list-link" href="/3/guests">Список гостей <span>↗</span></a><div class="footer-bottom"><span data-date="numeric">20 · 06 · 2027</span><button id="replayStory">Посмотреть историю ещё раз ↗</button><span>СОЗДАНО С ЛЮБОВЬЮ</span></div></footer>
   </main>
+  <section id="guestDirectory" class="guest-directory" hidden aria-labelledby="guestDirectoryTitle">
+    <div class="guest-directory-shell">
+      <header class="guest-directory-header"><a id="guestListBack" class="guest-list-back" href="/3"><span>←</span> Назад к приглашению</a><div class="guest-directory-mark" aria-hidden="true">♡</div></header>
+      <div class="guest-directory-intro"><p class="eyebrow">НАШИ ДОРОГИЕ ГОСТИ</p><h1 id="guestDirectoryTitle">Список гостей</h1><p id="guestDirectoryNames" class="guest-directory-names"></p><p id="guestDirectoryDate" class="guest-directory-date"></p></div>
+      <div id="guestStats" class="guest-stats" aria-label="Статистика ответов"></div>
+      <div id="guestCards" class="guest-cards"></div>
+      <p id="guestEmpty" class="guest-empty" hidden>Пока никто не оставил ответ.</p>
+    </div>
+  </section>
   <div class="floating-controls" aria-label="Настройки приглашения">
     <button id="languageToggle" class="language-toggle" type="button" aria-label="Кыргызчага которуу"><span data-language="ru" class="is-active">РУС</span><i aria-hidden="true">/</i><span data-language="ky">КЫР</span></button>
     <button id="musicToggle" class="music-toggle" type="button" aria-label="Включить музыку" aria-pressed="false"><span class="music-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="music-label">Музыка</span></button>

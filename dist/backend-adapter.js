@@ -3,8 +3,15 @@ const symbols=['✧','♡','♧','✶','◇'];
 export function invitationIdFromPath(pathname,defaultId){
   const parts=String(pathname||'').split('/').filter(Boolean);
   if(!parts.length)return String(defaultId);
-  const candidate=parts.at(-1);
+  const candidate=parts[0];
   return /^\d+$/.test(candidate)?candidate:null;
+}
+
+export function createGuestPatch(record,id,guest){
+  const numericId=Number(id);
+  if(!record||!Number.isInteger(numericId)||numericId<1||!guest?.name)throw new Error('invalid-guest-patch');
+  const previous=Array.isArray(record.guests)?record.guests:[];
+  return {...record,id:numericId,priglosi_id:Number(record.priglosi_id||numericId),guests:[...previous,{name:String(guest.name).trim(),wish:String(guest.wish||'').trim(),guests_count:Math.max(1,Number(guest.guests_count)||1),is_attending:Boolean(guest.is_attending)}]};
 }
 
 function bishkekIso(value){
