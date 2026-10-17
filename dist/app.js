@@ -79,6 +79,7 @@ $('#calendarDownload').addEventListener('click',()=>{if(!activeConfig)return;con
 // Three continuous film chapters: click-to-play, then scroll-controlled seeking.
 const story=$('#story'), opening=$('#openingVideo'), proposal=$('#proposalVideo'), forever=$('#foreverVideo'), proposalReverse=$('#proposalReverseVideo'), foreverReverse=$('#foreverReverseVideo'), poster=$('#scenePoster');
 const storyVideos=[opening,proposal,forever,proposalReverse,foreverReverse],scrubVideos=[proposal,forever,proposalReverse,foreverReverse];
+const STORY_PROGRESS_RATE=.05;
 let state='closed',currentChapter='intro',raf=0,lastProgress=-1,lastRenderDirection=0,playingWatchdog,targetProgress=0,displayedProgress=0,lastAnimationTime=0,touchY=null,activeScrubVideo=null;
 function chapter(name){if(currentChapter===name)return;currentChapter=name;for(const el of $$('.chapter')){const active=el.dataset.chapter===name;el.classList.toggle('is-active',active);el.setAttribute('aria-hidden',String(!active));}}
 function visibleVideo(video){for(const v of storyVideos)v.classList.toggle('is-visible',v===video);}
@@ -89,7 +90,7 @@ function controlStoryScroll(active){document.body.classList.toggle('story-contro
 if(!guestDirectoryPage)lock();else unlock();
 function setPlaybackStatus(key=''){playbackStatusKey=key;$('#playbackStatus').textContent=key?msg(key):'';}
 function setFormStatus(key=''){formStatusKey=key;$('#formStatus').textContent=key?msg(key):'';}
-function readyToScroll(){if(state!=='playing')return;opening.pause();unlock();state='scrolling';targetProgress=0;displayedProgress=0;lastAnimationTime=0;lastProgress=-1;lastRenderDirection=0;controlStoryScroll(true);story.classList.add('is-open');$('#boxHotspot').hidden=true;$('#caseHint').hidden=true;$('#videoError').hidden=true;setPlaybackStatus('playReady');$('#scrollHint').hidden=false;$('#storyCounter').textContent='01 / 03';chapter('promise');showPoster('ring-held');for(const video of [proposal,forever]){video.preload='auto';video.load();}scheduleUpdate();}
+function readyToScroll(){if(state!=='playing')return;opening.pause();unlock();state='scrolling';targetProgress=0;displayedProgress=0;lastAnimationTime=0;lastProgress=-1;lastRenderDirection=0;controlStoryScroll(true);story.classList.add('is-open');$('#boxHotspot').hidden=true;$('#caseHint').hidden=true;$('#videoError').hidden=true;setPlaybackStatus('playReady');$('#scrollHint').hidden=false;$('#storyCounter').textContent='01 / 03';chapter('promise');showPoster('ring-held');for(const video of [proposal,forever]){video.dataset.loading='true';video.preload='auto';video.load();}scheduleUpdate();}
 function playbackFailed(){clearTimeout(playingWatchdog);opening.pause();document.body.classList.remove('is-playing');state='closed';$('#boxHotspot').hidden=true;$('#videoError').hidden=false;setPlaybackStatus('playFail');}
 async function startStory(){
   if(state!=='closed')return;
@@ -115,25 +116,28 @@ function requestSeek(video,time){
 for(const video of scrubVideos){
   video.addEventListener('seeked',()=>{if(state!=='scrolling')return;const target=Number(video.dataset.targetTime||0);if(Math.abs(video.currentTime-target)>.12)requestSeek(video,target);scheduleUpdate();});
   video.addEventListener('loadeddata',()=>{lastProgress=-1;scheduleUpdate();});
+  video.addEventListener('canplay',()=>{lastProgress=-1;scheduleUpdate();});
+  video.addEventListener('waiting',()=>{lastProgress=-1;scheduleUpdate();});
   video.addEventListener('error',()=>{lastProgress=-1;scheduleUpdate();});
 }
 function posterForProgress(progress){return progress<.3?'ring-held':progress<.65?'ring-worn':'forever';}
 function pauseScrubVideos(except=null){for(const video of scrubVideos)if(video!==except&&!video.paused)video.pause();}
+function scrubVideoFor(frame,direction){const backwards=direction<0;return frame.clip==='proposal'?(backwards?proposalReverse:proposal):(backwards?foreverReverse:forever);}
 function renderStoryProgress(progress,direction=0){
   if(Math.abs(progress-lastProgress)<.0003&&direction===lastRenderDirection)return;lastProgress=progress;lastRenderDirection=direction;
   const frame=storyFrame(progress,proposal.duration||10,forever.duration||10);chapter(frame.chapter);
   poster.src=`assets/${posterForProgress(progress)}.webp`;
-  const backwards=direction<0,target=frame.clip==='proposal'?(backwards?proposalReverse:proposal):(backwards?foreverReverse:forever);
+  const backwards=direction<0,target=scrubVideoFor(frame,direction);
   const baseDuration=frame.clip==='proposal'?(proposal.duration||10):(forever.duration||10),duration=target.duration||baseDuration;
   const desiredTime=backwards?Math.max(0,duration-.05-frame.time):frame.time;
-  if(target.readyState>=2&&!target.error){
+  if(target.readyState>=3&&!target.error){
     pauseScrubVideos(target);visibleVideo(target);target.dataset.targetTime=String(desiredTime);
     const changed=activeScrubVideo!==target;activeScrubVideo=target;
     const drift=Math.abs(target.currentTime-desiredTime);
-    if(changed||drift>.18)requestSeek(target,desiredTime);
+    if(changed||(!direction&&drift>.04)||(direction&&drift>.65))requestSeek(target,desiredTime);
     if(direction){
       const span=frame.clip==='proposal'?.58:.42;
-      target.playbackRate=clamp((duration-.05)*.1/span,.5,3);
+      target.playbackRate=clamp((duration-.05)*STORY_PROGRESS_RATE/span,.5,1.5);
       if(target.paused&&!target.seeking)target.play().catch(()=>{});
     }else{
       target.pause();
@@ -152,8 +156,10 @@ function resumeReverseStory(){
 }
 function updateStory(timestamp){
   raf=0;if(state!=='scrolling')return;
-  if(!lastAnimationTime)lastAnimationTime=timestamp;const seconds=Math.min(.05,Math.max(0,(timestamp-lastAnimationTime)/1000));lastAnimationTime=timestamp;
-  const direction=Math.sign(targetProgress-displayedProgress);displayedProgress=advanceStoryProgress(displayedProgress,targetProgress,seconds);const moving=Math.abs(targetProgress-displayedProgress)>.0003?direction:0;renderStoryProgress(displayedProgress,moving);
+  if(!lastAnimationTime)lastAnimationTime=timestamp;const seconds=Math.min(.2,Math.max(0,(timestamp-lastAnimationTime)/1000));lastAnimationTime=timestamp;
+  const direction=Math.sign(targetProgress-displayedProgress),currentFrame=storyFrame(displayedProgress,proposal.duration||10,forever.duration||10),currentVideo=scrubVideoFor(currentFrame,direction);
+  if(direction&&!currentVideo.error&&currentVideo.readyState<3){renderStoryProgress(displayedProgress,direction);return;}
+  displayedProgress=advanceStoryProgress(displayedProgress,targetProgress,seconds,STORY_PROGRESS_RATE);const moving=Math.abs(targetProgress-displayedProgress)>.0003?direction:0;renderStoryProgress(displayedProgress,moving);
   if(targetProgress>=.999&&displayedProgress>=.999){completeScrollStory();return;}
   if(Math.abs(targetProgress-displayedProgress)>.0003)scheduleUpdate();
 }

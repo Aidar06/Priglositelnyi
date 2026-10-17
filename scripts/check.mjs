@@ -13,7 +13,7 @@ assert(storyFrame(1,10,10).time<10,'Never seek beyond last decodable frame');
 assert.equal(storyFrame(.58,10,10).time,0,'Clip transition');
 assert.equal(storyFrame(.2,10,10).chapter,'promise');
 assert.equal(storyFrame(.5,10,10).chapter,'together');
-assert.equal(advanceStoryProgress(0,1,1),.1,'Fast scroll progress is rate limited');assert.equal(advanceStoryProgress(.95,1,1),1,'Progress settles exactly at target');assert(Math.abs(advanceStoryProgress(.6,.2,.5)-.55)<1e-9,'Reverse progress is rate limited');
+assert.equal(advanceStoryProgress(0,1,1,.05),.05,'Fast scroll progress is rate limited');assert.equal(advanceStoryProgress(.98,1,1,.05),1,'Progress settles exactly at target');assert(Math.abs(advanceStoryProgress(.6,.2,.5,.05)-.575)<1e-9,'Reverse progress is rate limited');
 const ics=createCalendarEvent(config);assert(ics.includes('DTSTART:20270620T110000Z'),'Bishkek to UTC');assert(ics.includes('\r\nEND:VCALENDAR'));
 const kyIcs=createCalendarEvent({...config,language:'ky'});assert(kyIcs.includes('SUMMARY:Айдар менен Алина — үйлөнүү тою'),'Kyrgyz calendar export');
 assert.equal(config.locales.ky.schedule.length,config.locales.ru.schedule.length,'Both languages need the same schedule');
