@@ -2,6 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <base href="/">
   <meta name="theme-color" content="#f5efe3">
   <meta name="description" content="Одна встреча. Одно да. Навсегда. Приглашение на свадьбу Айдара и Алины.">
   <title>Айдар & Алина — наша история</title>
@@ -47,6 +48,7 @@
         <button id="boxHotspot" class="box-hotspot" aria-label="Открыть коробочку с кольцом и начать историю"></button>
         <p id="playbackStatus" class="sr-only" role="status"></p>
         <div id="videoError" class="video-error" hidden><p>Не удалось загрузить видео.</p><button id="retryStory">Попробовать ещё раз</button><button id="skipStory">Открыть приглашение</button></div>
+        <div id="dataError" class="data-error" role="alert" hidden><p id="dataErrorTitle">Приглашение не найдено</p><span id="dataErrorText">Проверьте номер в ссылке и попробуйте снова.</span><a id="dataRetry" href="">Повторить</a></div>
         <div class="story-bottom">
           <span id="storyCounter" class="micro">С ЛЮБОВЬЮ, ДЛЯ ВАС</span>
           <span id="scrollHint" class="scroll-hint" hidden>Прокручивайте — история продолжается <span>↓</span></span>
@@ -78,9 +80,7 @@
       <div class="place-copy reveal"><p class="eyebrow" id="venueType">БАНКЕТНЫЙ ЗАЛ</p><h2 id="venueName">«Аура»</h2><p id="venueCity" class="place-city">Бишкек</p><div class="fine-line"></div><p id="venueAddress" class="body-copy"></p><p class="place-time"><span data-date="long">20 июня 2027</span><span>Сбор гостей в <b id="arrivalTime">16:30</b></span></p><a id="mapLink" class="outline-button" hidden target="_blank" rel="noopener noreferrer">Посмотреть на карте <span>↗</span></a><p id="venueDemo" class="micro">Место указано для примера.<br>Адрес и маршрут добавим перед отправкой приглашений.</p></div></div>
     </section>
 
-    <section class="dress section-pad" id="dress">
-      <div class="dress-heading reveal"><p class="eyebrow">МАЛЕНЬКИЕ ДЕТАЛИ БОЛЬШОГО ДНЯ</p><h2>В гармонии <em>с праздником.</em></h2><p class="body-copy">Главное украшение вечера — ваши улыбки.<br>А если захочется поддержать настроение, выбирайте эти оттенки.</p></div>
-      <div id="palette" class="palette reveal"></div>
+    <section class="dress section-pad" id="dress" aria-label="Пожелания гостям">
       <div class="wishes reveal"><div><span>01 / ДРЕСС-КОД</span><p>Вечерняя элегантность.<br>И немного вашего характера.</p></div><div><span>02 / ЦВЕТЫ</span><p>Вместо букета — тёплые слова.<br>Они останутся с нами надолго.</p></div><div><span>03 / НАСТРОЕНИЕ</span><p>Берите с собой любовь<br>и готовность танцевать.</p></div></div>
     </section>
 

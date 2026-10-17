@@ -1,5 +1,7 @@
 {
   "demo": true,
+  "dataDemo": true,
+  "backend": {"baseUrl":"https://x8ki-letl-twmt.n7.xano.io/api:X8-e2j1w/priglosi","defaultId":3},
   "names": {"first":"Айдар","second":"Алина"},
   "date": "2027-06-20T17:00:00+06:00",
   "endDate": "2027-06-20T23:00:00+06:00",
