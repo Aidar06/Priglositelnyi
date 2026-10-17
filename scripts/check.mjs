@@ -27,6 +27,7 @@ for(const file of ['index.html','app.js','backend-adapter.js','style.css','fonts
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 assert(html.includes('id="languageToggle"')&&html.includes('data-language="ky"'),'Russian/Kyrgyz switch');
 assert(html.includes('id="caseHint"'),'Opening screen needs a subtle interaction hint');
+assert(html.includes('id="venueCity" class="place-city" hidden'),'Standalone city label should stay hidden');
 assert(!html.includes('id="palette"')&&!html.includes('В гармонии'),'Removed palette section');assert(fs.readFileSync(path.join(root,'_redirects'),'utf8').includes('/index.html 200'),'Deep-link fallback');
 for(const match of html.matchAll(/(?:src|href)="([^"#]+)"/g)){const url=match[1];if(!url.startsWith('http')&&!url.startsWith('data:')&&!url.startsWith('/'))assert(fs.existsSync(path.join(root,url)),`Missing file ${url}`);}
 console.log('Passed: calendar, leap year, scroll timeline boundaries, timezone export, assets and client secret checks.');
