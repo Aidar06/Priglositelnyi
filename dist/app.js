@@ -77,10 +77,11 @@ function renderGuestDirectory(c,format){
 $('#calendarDownload').addEventListener('click',()=>{if(!activeConfig)return;const url=URL.createObjectURL(new Blob([createCalendarEvent({...activeConfig,language})],{type:'text/calendar;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='our-wedding.ics';a.click();setTimeout(()=>URL.revokeObjectURL(url),3000);});
 
 // Three continuous film chapters: click-to-play, then scroll-controlled seeking.
-const story=$('#story'), opening=$('#openingVideo'), proposal=$('#proposalVideo'), forever=$('#foreverVideo'), poster=$('#scenePoster');
-let state='closed',currentChapter='intro',raf=0,lastProgress=-1,playingWatchdog,targetProgress=0,displayedProgress=0,lastAnimationTime=0,touchY=null,reverseScrollTimer;
+const story=$('#story'), opening=$('#openingVideo'), proposal=$('#proposalVideo'), forever=$('#foreverVideo'), proposalReverse=$('#proposalReverseVideo'), foreverReverse=$('#foreverReverseVideo'), poster=$('#scenePoster');
+const storyVideos=[opening,proposal,forever,proposalReverse,foreverReverse],scrubVideos=[proposal,forever,proposalReverse,foreverReverse];
+let state='closed',currentChapter='intro',raf=0,lastProgress=-1,lastRenderDirection=0,playingWatchdog,targetProgress=0,displayedProgress=0,lastAnimationTime=0,touchY=null,activeScrubVideo=null;
 function chapter(name){if(currentChapter===name)return;currentChapter=name;for(const el of $$('.chapter')){const active=el.dataset.chapter===name;el.classList.toggle('is-active',active);el.setAttribute('aria-hidden',String(!active));}}
-function visibleVideo(video){for(const v of [opening,proposal,forever])v.classList.toggle('is-visible',v===video);}
+function visibleVideo(video){for(const v of storyVideos)v.classList.toggle('is-visible',v===video);}
 function showPoster(name){poster.src=`assets/${name}.webp`;visibleVideo(null);}
 function unlock(){clearTimeout(playingWatchdog);document.body.classList.remove('is-playing','intro-locked');document.documentElement.classList.remove('scroll-locked');for(const section of $$('main > section:not(#story), .footer'))section.inert=false;}
 function lock(){document.body.classList.add('intro-locked');document.documentElement.classList.add('scroll-locked');for(const section of $$('main > section:not(#story), .footer'))section.inert=true;window.scrollTo({top:0,behavior:'instant'});}
@@ -88,7 +89,7 @@ function controlStoryScroll(active){document.body.classList.toggle('story-contro
 if(!guestDirectoryPage)lock();else unlock();
 function setPlaybackStatus(key=''){playbackStatusKey=key;$('#playbackStatus').textContent=key?msg(key):'';}
 function setFormStatus(key=''){formStatusKey=key;$('#formStatus').textContent=key?msg(key):'';}
-function readyToScroll(){if(state!=='playing')return;opening.pause();unlock();state='scrolling';targetProgress=0;displayedProgress=0;lastAnimationTime=0;lastProgress=-1;controlStoryScroll(true);story.classList.add('is-open');$('#boxHotspot').hidden=true;$('#caseHint').hidden=true;$('#videoError').hidden=true;setPlaybackStatus('playReady');$('#scrollHint').hidden=false;$('#storyCounter').textContent='01 / 03';chapter('promise');showPoster('ring-held');proposal.preload='auto';forever.preload='auto';proposal.load();forever.load();scheduleUpdate();}
+function readyToScroll(){if(state!=='playing')return;opening.pause();unlock();state='scrolling';targetProgress=0;displayedProgress=0;lastAnimationTime=0;lastProgress=-1;lastRenderDirection=0;controlStoryScroll(true);story.classList.add('is-open');$('#boxHotspot').hidden=true;$('#caseHint').hidden=true;$('#videoError').hidden=true;setPlaybackStatus('playReady');$('#scrollHint').hidden=false;$('#storyCounter').textContent='01 / 03';chapter('promise');showPoster('ring-held');for(const video of [proposal,forever]){video.preload='auto';video.load();}scheduleUpdate();}
 function playbackFailed(){clearTimeout(playingWatchdog);opening.pause();document.body.classList.remove('is-playing');state='closed';$('#boxHotspot').hidden=true;$('#videoError').hidden=false;setPlaybackStatus('playFail');}
 async function startStory(){
   if(state!=='closed')return;
@@ -111,30 +112,48 @@ function requestSeek(video,time){
   if(video.readyState<2||video.seeking)return;
   if(Math.abs(video.currentTime-time)>.025){try{video.currentTime=time;}catch{}}
 }
-for(const video of [proposal,forever]){
-  video.addEventListener('seeked',()=>{if(state!=='scrolling')return;const target=Number(video.dataset.targetTime||0);if(Math.abs(video.currentTime-target)>.04)requestSeek(video,target);});
+for(const video of scrubVideos){
+  video.addEventListener('seeked',()=>{if(state!=='scrolling')return;const target=Number(video.dataset.targetTime||0);if(Math.abs(video.currentTime-target)>.12)requestSeek(video,target);scheduleUpdate();});
   video.addEventListener('loadeddata',()=>{lastProgress=-1;scheduleUpdate();});
   video.addEventListener('error',()=>{lastProgress=-1;scheduleUpdate();});
 }
-function renderStoryProgress(progress){
-  if(Math.abs(progress-lastProgress)<.0003)return;lastProgress=progress;
+function posterForProgress(progress){return progress<.3?'ring-held':progress<.65?'ring-worn':'forever';}
+function pauseScrubVideos(except=null){for(const video of scrubVideos)if(video!==except&&!video.paused)video.pause();}
+function renderStoryProgress(progress,direction=0){
+  if(Math.abs(progress-lastProgress)<.0003&&direction===lastRenderDirection)return;lastProgress=progress;lastRenderDirection=direction;
   const frame=storyFrame(progress,proposal.duration||10,forever.duration||10);chapter(frame.chapter);
-  const target=frame.clip==='proposal'?proposal:forever;
-  if(target.readyState>=2&&!target.error){visibleVideo(target);requestSeek(target,frame.time);}else showPoster(progress<.3?'ring-held':progress<.65?'ring-worn':'forever');
+  poster.src=`assets/${posterForProgress(progress)}.webp`;
+  const backwards=direction<0,target=frame.clip==='proposal'?(backwards?proposalReverse:proposal):(backwards?foreverReverse:forever);
+  const baseDuration=frame.clip==='proposal'?(proposal.duration||10):(forever.duration||10),duration=target.duration||baseDuration;
+  const desiredTime=backwards?Math.max(0,duration-.05-frame.time):frame.time;
+  if(target.readyState>=2&&!target.error){
+    pauseScrubVideos(target);visibleVideo(target);target.dataset.targetTime=String(desiredTime);
+    const changed=activeScrubVideo!==target;activeScrubVideo=target;
+    const drift=Math.abs(target.currentTime-desiredTime);
+    if(changed||drift>.18)requestSeek(target,desiredTime);
+    if(direction){
+      const span=frame.clip==='proposal'?.58:.42;
+      target.playbackRate=clamp((duration-.05)*.1/span,.5,3);
+      if(target.paused&&!target.seeking)target.play().catch(()=>{});
+    }else{
+      target.pause();
+      if(drift>.04)requestSeek(target,desiredTime);
+    }
+  }else{if(!target.error&&target.dataset.loading!=='true'){target.dataset.loading='true';target.preload='auto';target.load();}activeScrubVideo=null;pauseScrubVideos();showPoster(posterForProgress(progress));}
   $('#storyCounter').textContent=frame.chapter==='promise'?'01 / 03':frame.chapter==='together'?'02 / 03':'03 / 03';
   $('#storyProgress').style.transform=`scaleX(${progress})`;
 }
-function completeScrollStory(){clearTimeout(reverseScrollTimer);displayedProgress=targetProgress=1;renderStoryProgress(1);state='complete';controlStoryScroll(false);$('#scrollHint').hidden=true;lastAnimationTime=0;const range=story.offsetHeight-$('.story-stage').offsetHeight;window.scrollTo({top:story.offsetTop+range,behavior:'instant'});}
+function completeScrollStory(){displayedProgress=targetProgress=1;renderStoryProgress(1,0);state='complete';$('#scrollHint').hidden=true;lastAnimationTime=0;for(const video of [proposalReverse,foreverReverse])if(video.readyState<2&&video.dataset.loading!=='true'){video.dataset.loading='true';video.preload='auto';video.load();}const range=story.offsetHeight-$('.story-stage').offsetHeight;window.scrollTo({top:story.offsetTop+range,behavior:'instant'});controlStoryScroll(false);}
 function resumeReverseStory(){
   if(state!=='complete')return;
   const range=story.offsetHeight-$('.story-stage').offsetHeight,end=story.offsetTop+range;
   if(window.scrollY>=end-1)return;
-  clearTimeout(reverseScrollTimer);reverseScrollTimer=setTimeout(()=>{if(state!=='complete')return;const raw=clamp((window.scrollY-story.offsetTop)/range);state='scrolling';displayedProgress=1;targetProgress=raw;lastProgress=-1;lastAnimationTime=0;controlStoryScroll(true);$('#scrollHint').hidden=false;scheduleUpdate();},160);
+  const raw=clamp((window.scrollY-story.offsetTop)/range);state='scrolling';displayedProgress=1;targetProgress=raw;lastProgress=-1;lastRenderDirection=0;lastAnimationTime=0;poster.src='assets/forever.webp';window.scrollTo({top:end,behavior:'instant'});controlStoryScroll(true);$('#scrollHint').hidden=false;scheduleUpdate();
 }
 function updateStory(timestamp){
   raf=0;if(state!=='scrolling')return;
   if(!lastAnimationTime)lastAnimationTime=timestamp;const seconds=Math.min(.05,Math.max(0,(timestamp-lastAnimationTime)/1000));lastAnimationTime=timestamp;
-  displayedProgress=advanceStoryProgress(displayedProgress,targetProgress,seconds);renderStoryProgress(displayedProgress);
+  const direction=Math.sign(targetProgress-displayedProgress);displayedProgress=advanceStoryProgress(displayedProgress,targetProgress,seconds);const moving=Math.abs(targetProgress-displayedProgress)>.0003?direction:0;renderStoryProgress(displayedProgress,moving);
   if(targetProgress>=.999&&displayedProgress>=.999){completeScrollStory();return;}
   if(Math.abs(targetProgress-displayedProgress)>.0003)scheduleUpdate();
 }
@@ -146,7 +165,7 @@ window.addEventListener('touchend',()=>{touchY=null;},{passive:true});
 document.addEventListener('keydown',e=>{if(state!=='scrolling'||!['ArrowDown','ArrowUp','PageDown','PageUp',' ','Home','End'].includes(e.key))return;e.preventDefault();if(e.key==='Home')targetProgress=0;else if(e.key==='End')targetProgress=1;else targetProgress=clamp(targetProgress+(['ArrowUp','PageUp'].includes(e.key)?-1:1)*(['PageDown','PageUp',' '].includes(e.key)?.2:.06));scheduleUpdate();});
 window.addEventListener('scroll',resumeReverseStory,{passive:true});
 window.addEventListener('resize',()=>{lastProgress=-1;scheduleUpdate();},{passive:true});
-$('#replayStory').addEventListener('click',()=>{clearTimeout(reverseScrollTimer);controlStoryScroll(false);unlock();state='closed';targetProgress=displayedProgress=0;lastAnimationTime=0;opening.pause();opening.currentTime=0;proposal.pause();forever.pause();story.classList.remove('is-open');showPoster('closed-box');chapter('intro');$('#boxHotspot').hidden=false;$('#caseHint').hidden=false;$('#videoError').hidden=true;setPlaybackStatus();$('#scrollHint').hidden=true;$('#storyCounter').textContent='';$('#storyProgress').style.transform='scaleX(0)';lastProgress=-1;lock();$('#boxHotspot').focus({preventScroll:true});});
+$('#replayStory').addEventListener('click',()=>{controlStoryScroll(false);unlock();state='closed';targetProgress=displayedProgress=0;lastAnimationTime=0;activeScrubVideo=null;for(const video of storyVideos){video.pause();video.currentTime=0;}story.classList.remove('is-open');showPoster('closed-box');chapter('intro');$('#boxHotspot').hidden=false;$('#caseHint').hidden=false;$('#videoError').hidden=true;setPlaybackStatus();$('#scrollHint').hidden=true;$('#storyCounter').textContent='';$('#storyProgress').style.transform='scaleX(0)';lastProgress=-1;lastRenderDirection=0;lock();$('#boxHotspot').focus({preventScroll:true});});
 reduced.addEventListener('change',()=>{if(reduced.matches&&state==='playing'){opening.pause();controlStoryScroll(false);unlock();state='static';$('#caseHint').hidden=true;showPoster('forever');chapter('forever');}});
 
 // Reveal only when JavaScript and IntersectionObserver are available.
