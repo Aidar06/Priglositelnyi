@@ -1,4 +1,8 @@
 export const clamp=(n,min=0,max=1)=>Math.min(max,Math.max(min,n));
+export function advanceStoryProgress(current,target,seconds,maxRate=.1){
+  const from=clamp(Number(current)||0),to=clamp(Number(target)||0),step=Math.max(0,Number(seconds)||0)*maxRate;
+  return Math.abs(to-from)<=step?to:from+Math.sign(to-from)*step;
+}
 export function storyFrame(progress,proposalDuration,foreverDuration){
   const p=clamp(progress);
   return {chapter:p<.36?'promise':p<.69?'together':'forever',clip:p<.58?'proposal':'forever',time:p<.58?clamp(p/.58)*Math.max(0,proposalDuration-.05):clamp((p-.58)/.42)*Math.max(0,foreverDuration-.05)};

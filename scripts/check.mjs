@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import {calendarRows,storyFrame,createCalendarEvent} from '../dist/story-model.js';
+import {calendarRows,storyFrame,createCalendarEvent,advanceStoryProgress} from '../dist/story-model.js';
 import {invitationIdFromPath,adaptXanoInvitation,createGuestPatch} from '../dist/backend-adapter.js';
 const root=path.resolve(import.meta.dirname,'../dist');
 const config=JSON.parse(fs.readFileSync(path.join(root,'content.json'),'utf8'));
@@ -13,6 +13,7 @@ assert(storyFrame(1,10,10).time<10,'Never seek beyond last decodable frame');
 assert.equal(storyFrame(.58,10,10).time,0,'Clip transition');
 assert.equal(storyFrame(.2,10,10).chapter,'promise');
 assert.equal(storyFrame(.5,10,10).chapter,'together');
+assert.equal(advanceStoryProgress(0,1,1),.1,'Fast scroll progress is rate limited');assert.equal(advanceStoryProgress(.95,1,1),1,'Progress settles exactly at target');assert(Math.abs(advanceStoryProgress(.6,.2,.5)-.55)<1e-9,'Reverse progress is rate limited');
 const ics=createCalendarEvent(config);assert(ics.includes('DTSTART:20270620T110000Z'),'Bishkek to UTC');assert(ics.includes('\r\nEND:VCALENDAR'));
 const kyIcs=createCalendarEvent({...config,language:'ky'});assert(kyIcs.includes('SUMMARY:Айдар менен Алина — үйлөнүү тою'),'Kyrgyz calendar export');
 assert.equal(config.locales.ky.schedule.length,config.locales.ru.schedule.length,'Both languages need the same schedule');
@@ -25,6 +26,7 @@ for(const name of ['opening.mp4','proposal.mp4','forever.mp4','closed-box.webp',
 for(const file of ['index.html','app.js','backend-adapter.js','style.css','fonts.css','content.json']){const text=fs.readFileSync(path.join(root,file),'utf8');assert(!/HIGGSFIELD_API_KEY|Authorization: Key/.test(text),'No secrets/client credentials');}
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 assert(html.includes('id="languageToggle"')&&html.includes('data-language="ky"'),'Russian/Kyrgyz switch');
+assert(html.includes('id="caseHint"'),'Opening screen needs a subtle interaction hint');
 assert(!html.includes('id="palette"')&&!html.includes('В гармонии'),'Removed palette section');assert(fs.readFileSync(path.join(root,'_redirects'),'utf8').includes('/index.html 200'),'Deep-link fallback');
 for(const match of html.matchAll(/(?:src|href)="([^"#]+)"/g)){const url=match[1];if(!url.startsWith('http')&&!url.startsWith('data:')&&!url.startsWith('/'))assert(fs.existsSync(path.join(root,url)),`Missing file ${url}`);}
 console.log('Passed: calendar, leap year, scroll timeline boundaries, timezone export, assets and client secret checks.');
