@@ -94,6 +94,7 @@ function readyToScroll(){if(state!=='playing')return;opening.pause();unlock();st
 function playbackFailed(){clearTimeout(playingWatchdog);opening.pause();document.body.classList.remove('is-playing');state='closed';$('#boxHotspot').hidden=true;$('#videoError').hidden=false;setPlaybackStatus('playFail');}
 async function startStory(){
   if(state!=='closed')return;
+  startMusic();
   $('#videoError').hidden=true;
   if(reduced.matches){unlock();state='static';showPoster('forever');chapter('forever');$('#boxHotspot').hidden=true;$('#caseHint').hidden=true;return;}
   state='playing';document.body.classList.add('is-playing');window.scrollTo({top:0,behavior:'instant'});$('#boxHotspot').hidden=true;$('#caseHint').hidden=true;setPlaybackStatus('playing');
@@ -204,9 +205,11 @@ form.addEventListener('submit',async e=>{
 $('#guestName').addEventListener('input',()=>$('#guestName').setCustomValidity(''));
 try{const saved=JSON.parse(localStorage.getItem(rsvpStorageKey())||'null');if(saved&&config?.demo){$('#guestName').value=saved.name||'';const radio=form.querySelector(`input[value="${saved.attending?'yes':'no'}"]`);if(radio)radio.checked=true;$('#guestCount').value=String(saved.guests||1);$('#guestNote').value=saved.note||'';$('#guestOptions').hidden=!saved.attending;}}catch{}
 
-// Quiet original ambient chimes. Never start audio without a click.
-let audioContext,musicTimer,musicPlaying=false,audioFailed=false;
-function musicPhrase(){if(!audioContext||!musicPlaying)return;const notes=[261.63,329.63,392,493.88,440,392,329.63,293.66];const now=audioContext.currentTime;notes.forEach((frequency,i)=>{const osc=audioContext.createOscillator(),gain=audioContext.createGain();osc.type='sine';osc.frequency.value=frequency;gain.gain.setValueAtTime(0,now+i*.75);gain.gain.linearRampToValueAtTime(.035,now+i*.75+.035);gain.gain.exponentialRampToValueAtTime(.0001,now+i*.75+2.6);osc.connect(gain);gain.connect(audioContext.destination);osc.start(now+i*.75);osc.stop(now+i*.75+2.7);});}
-$('#musicToggle').addEventListener('click',async()=>{try{if(!audioContext)audioContext=new(window.AudioContext||window.webkitAudioContext)();musicPlaying=!musicPlaying;if(musicPlaying){await audioContext.resume();musicPhrase();musicTimer=setInterval(musicPhrase,6800);}else{clearInterval(musicTimer);await audioContext.suspend();}audioFailed=false;$('#musicToggle').setAttribute('aria-pressed',String(musicPlaying));$('#musicToggle').setAttribute('aria-label',musicPlaying?msg('musicOn'):msg('musicOff'));$('.music-label').textContent=language==='ky'?kyText.Музыка:'Музыка';}catch{audioFailed=true;$('.music-label').textContent=msg('musicFail');}});
-document.addEventListener('visibilitychange',()=>{if(document.hidden&&musicPlaying){musicPlaying=false;clearInterval(musicTimer);audioContext?.suspend();$('#musicToggle').setAttribute('aria-pressed','false');$('#musicToggle').setAttribute('aria-label',msg('musicOff'));}});
+// The first case tap is the browser-approved gesture that starts the soundtrack.
+const backgroundMusic=$('#backgroundMusic');let musicEnabled=true,audioFailed=false;backgroundMusic.volume=.62;
+function updateMusicControl(){const playing=!backgroundMusic.paused;$('#musicToggle').setAttribute('aria-pressed',String(playing));$('#musicToggle').setAttribute('aria-label',playing?msg('musicOn'):msg('musicOff'));$('.music-label').textContent=audioFailed?msg('musicFail'):(language==='ky'?kyText.Музыка:'Музыка');}
+async function startMusic(){if(!musicEnabled)return;try{await backgroundMusic.play();audioFailed=false;}catch{audioFailed=true;}updateMusicControl();}
+$('#musicToggle').addEventListener('click',()=>{musicEnabled=backgroundMusic.paused;if(musicEnabled)startMusic();else{backgroundMusic.pause();audioFailed=false;updateMusicControl();}});
+backgroundMusic.addEventListener('play',updateMusicControl);backgroundMusic.addEventListener('pause',updateMusicControl);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)backgroundMusic.pause();else if(musicEnabled&&state!=='closed')startMusic();updateMusicControl();});
 $('#languageToggle').addEventListener('click',()=>{const preservedState=state,preservedChapter=currentChapter,preservedTarget=targetProgress,preservedDisplayed=displayedProgress;language=language==='ru'?'ky':'ru';try{localStorage.setItem('priglasi-language',language);}catch{}applyStaticLanguage();if(config)renderContent(config,{preserveScroll:true});state=preservedState;currentChapter=preservedChapter;targetProgress=preservedTarget;displayedProgress=preservedDisplayed;if(playbackStatusKey)setPlaybackStatus(playbackStatusKey);if(formStatusKey)setFormStatus(formStatusKey);if(audioFailed)$('.music-label').textContent=msg('musicFail');});

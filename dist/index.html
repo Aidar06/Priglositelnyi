@@ -15,7 +15,7 @@
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="preload" href="assets/closed-box.webp" as="image">
   <link rel="stylesheet" href="fonts.css"><link rel="stylesheet" href="style.css?v=20261018-1">
-  <script type="module" src="app.js?v=20261017-2"></script>
+  <script type="module" src="app.js?v=20261018-3"></script>
 </head>
 <body class="intro-locked">
   <a class="sr-only skip-link" href="#welcome">Перейти к приглашению</a>
@@ -119,6 +119,7 @@
       <p id="guestEmpty" class="guest-empty" hidden>Пока никто не оставил ответ.</p>
     </div>
   </section>
+  <audio id="backgroundMusic" preload="none" loop><source src="assets/music-strauss-waltz.ogg" type="audio/ogg"></audio>
   <div class="floating-controls" aria-label="Настройки приглашения">
     <button id="languageToggle" class="language-toggle" type="button" aria-label="Кыргызчага которуу"><span data-language="ru" class="is-active">РУС</span><i aria-hidden="true">/</i><span data-language="ky">КЫР</span></button>
     <button id="musicToggle" class="music-toggle" type="button" aria-label="Включить музыку" aria-pressed="false"><span class="music-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="music-label">Музыка</span></button>

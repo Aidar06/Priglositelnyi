@@ -22,7 +22,9 @@ async function upload(file) {
   if(!r.ok) throw new Error(`Asset upload HTTP ${r.status}`);
   return u.public_url;
 }
-const [action,name,first,last,promptFile] = process.argv.slice(2);
+const [action,name,first,last,promptFile,durationInput='10'] = process.argv.slice(2);
+const duration=Number(durationInput);
+if(![5,10].includes(duration)) throw new Error('Duration must be 5 or 10 seconds');
 if (!/^[a-z0-9-]+$/.test(name||'')) throw new Error('A safe job name is required');
 const record = path.join(jobDir, name+'.json');
 if(action==='submit') {
@@ -30,16 +32,16 @@ if(action==='submit') {
   const existing = await fs.readdir(jobDir);
   let reserved = 0;
   for(const file of existing.filter(f=>f.endsWith('.json'))) reserved += JSON.parse(await fs.readFile(path.join(jobDir,file),'utf8')).reservedUsd||0;
-  const reserve=1.68; // 10 seconds x published maximum list rate $0.168/s.
+  const reserve=Number((duration*0.168).toFixed(2)); // Published maximum list rate $0.168/s.
   if(reserved+reserve>10) throw new Error('User budget $10 would be exceeded');
-  const job={name,reservedUsd:reserve,model:'kling-video/v3.0/pro/image-to-video',status:'uploading',createdAt:new Date().toISOString()};
+  const job={name,reservedUsd:reserve,model:'kling-video/v3.0/pro/image-to-video',duration,status:'uploading',createdAt:new Date().toISOString()};
   await fs.writeFile(record,JSON.stringify(job,null,2));
   const image_url=await upload(path.resolve(first));
   const last_image_url=await upload(path.resolve(last));
   job.status='submitting';
   await fs.writeFile(record,JSON.stringify(job,null,2));
   const prompt=await fs.readFile(path.resolve(promptFile),'utf8');
-  const out=await api(base+'/'+job.model,{image_url,last_image_url,prompt,sound:'off',duration:10,cfg_scale:0.6,multi_shots:false});
+  const out=await api(base+'/'+job.model,{image_url,last_image_url,prompt,sound:'off',duration,cfg_scale:0.6,multi_shots:false});
   Object.assign(job,{request_id:out.request_id,status:out.status||'queued',status_url:out.status_url});
   await fs.writeFile(record,JSON.stringify(job,null,2));
   console.log(JSON.stringify({name,request_id:job.request_id,status:job.status,totalReservedUsd:reserved+reserve}));
