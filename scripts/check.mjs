@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {calendarRows,storyFrame,createCalendarEvent,advanceStoryProgress} from '../dist/story-model.js';
 import {invitationIdFromPath,adaptXanoInvitation,createGuestPatch} from '../dist/backend-adapter.js';
+import {invitationMeta,renderInvitationHtml} from '../api/invitation.js';
 const root=path.resolve(import.meta.dirname,'../dist');
 const config=JSON.parse(fs.readFileSync(path.join(root,'content.json'),'utf8'));
 assert.equal(calendarRows(2027,5)[2][6],20,'Wedding must be on Sunday June 20');
@@ -20,6 +21,8 @@ assert.equal(config.locales.ky.schedule.length,config.locales.ru.schedule.length
 assert.equal(invitationIdFromPath('/3',config.backend.defaultId),'3','Path ID');assert.equal(invitationIdFromPath('/3/',config.backend.defaultId),'3','Trailing slash ID');assert.equal(invitationIdFromPath('/',config.backend.defaultId),'3','Default ID');assert.equal(invitationIdFromPath('/wrong',config.backend.defaultId),null,'Reject invalid ID');
 assert.equal(invitationIdFromPath('/3/guests',config.backend.defaultId),'3','Guest list path ID');
 const apiFixture={priglosi_id:3,names:{has:'Бекзат',wife:'Алина'},date:'2027-06-12T16:30:00',ceremonies:[{time:'16:30',ceremony_ru:'Встреча',text_ru:'Описание',ceremony_kg:'Тосуп алуу',text_kg:'Сүрөттөмө'},{time:'23:00',ceremony_ru:'Финал',text_ru:'До встречи',ceremony_kg:'Жыйынтык',text_kg:'Көрүшкөнчө'}],adress:{pl:'Банкетный зал',name:'Изумруд',adrr:'г. Бишкек, ул. Чуй, 123'},guests:[]};
+const previewMeta=invitationMeta(apiFixture);assert.equal(previewMeta.title,'Бекзат & Алина — свадебное приглашение');assert(previewMeta.description.includes('12 июня 2027 г.'));
+const previewHtml=renderInvitationHtml('<head><meta name="description" content="old"><meta property="og:title" content="old"><title>old</title></head>',previewMeta,'https://example.com/box.webp');assert(previewHtml.includes('<title>Бекзат &amp; Алина — свадебное приглашение</title>'));assert(previewHtml.includes('property="og:image" content="https://example.com/box.webp"'));
 const adapted=adaptXanoInvitation(apiFixture,config);assert.equal(adapted.names.first,'Бекзат');assert.equal(adapted.date,'2027-06-12T16:30:00+06:00');assert.equal(adapted.endDate,'2027-06-12T23:00:00+06:00');assert.equal(adapted.locales.ky.schedule[1].title,'Жыйынтык');assert.equal(adapted.locales.ru.venue.name,'Изумруд');assert.equal(adapted.dataDemo,false);
 const guestPatch=createGuestPatch({...apiFixture,guests:[{name:'Айбек',wish:'Счастья!',guests_count:2,is_attending:true}]},3,{name:'  Нурия  ',wish:'  Любви! ',guests_count:3,is_attending:false});assert.equal(guestPatch.id,3);assert.equal(guestPatch.priglosi_id,3);assert.equal(guestPatch.guests.length,2);assert.deepEqual(guestPatch.guests[1],{name:'Нурия',wish:'Любви!',guests_count:3,is_attending:false});assert.equal(apiFixture.guests.length,0,'Patch builder must not mutate source');
 for(const name of ['opening.mp4','proposal.mp4','proposal-reverse.mp4','forever.mp4','forever-reverse.mp4','closed-box.webp','ring-held.webp','ring-worn.webp','forever.webp'])assert(fs.statSync(path.join(root,'assets',name)).size>1000,`Missing asset ${name}`);
